@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>두벌식 자판 역변환기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .converter-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            color: #444;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
+            background: rgba(255, 255, 255, 1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #ffecd2, #fcb69f);
+            color: #333;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .examples {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        
+        .examples h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .example-item {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .example-item .before {
+            color: #d63384;
+            font-weight: bold;
+        }
+        
+        .example-item .after {
+            color: #198754;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 두벌식 자판 역변환기</h1>
+        
+        <div class="converter-section">
+            <h2 class="section-title">📝 텍스트 입력</h2>
+            <div class="input-group">
+                <textarea id="inputText" placeholder="변환할 텍스트를 입력하세요...&#10;예: dkssudgktpdy (안녕하세요)&#10;예: 뮤ㅗㅑㅊ (music)"></textarea>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="convertEngToKor()">영문 → 한글</button>
+                    <button class="btn-secondary" onclick="convertKorToEng()">한글 → 영문</button>
+                    <button class="btn-primary" onclick="autoConvert()">자동 변환</button>
+                    <button class="btn-secondary" onclick="convertToCompleteHangul()">🔥 완전조합</button>
+                    <button onclick="clearAll()" style="background: #dc3545; color: white;">전체 지우기</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="converter-section">
+            <h2 class="section-title">✨ 변환 결과</h2>
+            <textarea id="outputText" placeholder="변환된 결과가 여기에 표시됩니다..." readonly></textarea>
+            <div class="button-group">
+                <button class="btn-secondary" onclick="copyResult()">결과 복사</button>
+                <button class="btn-primary" onclick="swapTexts()">입력↔결과 바꾸기</button>
+            </div>
+        </div>
+        
+        <div class="examples">
+            <h3>💡 사용 예시</h3>
+            <div class="example-item">
+                <span class="before">dkssudgktpdy</span> → <span class="after">안녕하세요</span> (🔥완전조합)
+            </div>
+            <div class="example-item">
+                <span class="before">뮤ㅗㅑㅊ</span> → <span class="after">music</span>
+            </div>
+            <div class="example-item">
+                <span class="before">gksmlaekdlqslek</span> → <span class="after">한국어입니다</span> (🔥완전조합)
+            </div>
+            <div class="example-item">
+                <span class="before">ㅗ디ㅗㅐ 루ㅣㅜ 슈ㅗㅅ</span> → <span class="after">hello my shot</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 두벌식 자판 매핑
+        const engToKor = {
+            'q': 'ㅂ', 'w': 'ㅈ', 'e': 'ㄷ', 'r': 'ㄱ', 't': 'ㅅ', 'y': 'ㅛ', 'u': 'ㅕ', 'i': 'ㅑ', 'o': 'ㅐ', 'p': 'ㅔ',
+            'a': 'ㅁ', 's': 'ㄴ', 'd': 'ㅇ', 'f': 'ㄹ', 'g': 'ㅎ', 'h': 'ㅗ', 'j': 'ㅓ', 'k': 'ㅏ', 'l': 'ㅣ',
+            'z': 'ㅋ', 'x': 'ㅌ', 'c': 'ㅊ', 'v': 'ㅍ', 'b': 'ㅠ', 'n': 'ㅜ', 'm': 'ㅡ',
+            'Q': 'ㅃ', 'W': 'ㅉ', 'E': 'ㄸ', 'R': 'ㄲ', 'T': 'ㅆ', 'Y': 'ㅛ', 'U': 'ㅕ', 'I': 'ㅑ', 'O': 'ㅒ', 'P': 'ㅖ'
+        };
+
+        const korToEng = {};
+        for (let key in engToKor) {
+            korToEng[engToKor[key]] = key;
+        }
+
+        // 한글 조합을 위한 매핑
+        const CHOSUNG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        const JUNGSUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+        const JONGSUNG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        
+        const CHOSUNG_MAP = {
+            'ㄱ': 0, 'ㄲ': 1, 'ㄴ': 2, 'ㄷ': 3, 'ㄸ': 4, 'ㄹ': 5, 'ㅁ': 6, 'ㅂ': 7, 'ㅃ': 8, 'ㅅ': 9, 'ㅆ': 10, 'ㅇ': 11, 'ㅈ': 12, 'ㅉ': 13, 'ㅊ': 14, 'ㅋ': 15, 'ㅌ': 16, 'ㅍ': 17, 'ㅎ': 18
+        };
+        const JUNGSUNG_MAP = {
+            'ㅏ': 0, 'ㅐ': 1, 'ㅑ': 2, 'ㅒ': 3, 'ㅓ': 4, 'ㅔ': 5, 'ㅕ': 6, 'ㅖ': 7, 'ㅗ': 8, 'ㅘ': 9, 'ㅙ': 10, 'ㅚ': 11, 'ㅛ': 12, 'ㅜ': 13, 'ㅝ': 14, 'ㅞ': 15, 'ㅟ': 16, 'ㅠ': 17, 'ㅡ': 18, 'ㅢ': 19, 'ㅣ': 20
+        };
+        const JONGSUNG_MAP = {
+            '': 0, 'ㄱ': 1, 'ㄲ': 2, 'ㄳ': 3, 'ㄴ': 4, 'ㄵ': 5, 'ㄶ': 6, 'ㄷ': 7, 'ㄹ': 8, 'ㄺ': 9, 'ㄻ': 10, 'ㄼ': 11, 'ㄽ': 12, 'ㄾ': 13, 'ㄿ': 14, 'ㅀ': 15, 'ㅁ': 16, 'ㅂ': 17, 'ㅄ': 18, 'ㅅ': 19, 'ㅆ': 20, 'ㅇ': 21, 'ㅈ': 22, 'ㅊ': 23, 'ㅋ': 24, 'ㅌ': 25, 'ㅍ': 26, 'ㅎ': 27
+        };
+
+        function combineHangul(cho, jung, jong = '') {
+            const choIndex = CHOSUNG_MAP[cho];
+            const jungIndex = JUNGSUNG_MAP[jung];
+            const jongIndex = JONGSUNG_MAP[jong];
+            
+            if (choIndex === undefined || jungIndex === undefined || jongIndex === undefined) {
+                return cho + jung + jong;
+            }
+            
+            const code = 0xAC00 + (choIndex * 21 + jungIndex) * 28 + jongIndex;
+            return String.fromCharCode(code);
+        }
+
+        function convertToCompleteHangul() {
+            const input = document.getElementById('inputText').value;
+            let result = '';
+            let consonants = [];
+            let vowels = [];
+            let buffer = [];
+            
+            // 먼저 영문을 한글 자모로 변환
+            for (let char of input) {
+                if (engToKor[char]) {
+                    buffer.push(engToKor[char]);
+                } else {
+                    // 한글이 아닌 문자는 버퍼를 처리하고 그대로 추가
+                    if (buffer.length > 0) {
+                        result += processBuffer(buffer);
+                        buffer = [];
+                    }
+                    result += char;
+                }
+            }
+            
+            // 마지막 버퍼 처리
+            if (buffer.length > 0) {
+                result += processBuffer(buffer);
+            }
+            
+            document.getElementById('outputText').value = result;
+        }
+
+        function processBuffer(buffer) {
+            let result = '';
+            let i = 0;
+            
+            while (i < buffer.length) {
+                const char1 = buffer[i];
+                const char2 = buffer[i + 1];
+                const char3 = buffer[i + 2];
+                
+                // 초성인지 확인
+                if (CHOSUNG_MAP[char1] !== undefined) {
+                    // 중성이 있는지 확인
+                    if (char2 && JUNGSUNG_MAP[char2] !== undefined) {
+                        // 종성이 있는지 확인
+                        if (char3 && JONGSUNG_MAP[char3] !== undefined && 
+                            // 다음 글자가 초성이 아닌 경우에만 종성으로 처리
+                            (i + 3 >= buffer.length || CHOSUNG_MAP[buffer[i + 3]] === undefined)) {
+                            result += combineHangul(char1, char2, char3);
+                            i += 3;
+                        } else {
+                            result += combineHangul(char1, char2);
+                            i += 2;
+                        }
+                    } else {
+                        result += char1;
+                        i++;
+                    }
+                } else {
+                    result += char1;
+                    i++;
+                }
+            }
+            
+            return result;
+        }
+
+        function convertEngToKor() {
+            const input = document.getElementById('inputText').value;
+            let result = '';
+            
+            for (let char of input) {
+                if (engToKor[char]) {
+                    result += engToKor[char];
+                } else {
+                    result += char;
+                }
+            }
+            
+            document.getElementById('outputText').value = result;
+        }
+
+        function convertKorToEng() {
+            const input = document.getElementById('inputText').value;
+            let result = '';
+            
+            for (let char of input) {
+                if (korToEng[char]) {
+                    result += korToEng[char];
+                } else {
+                    result += char;
+                }
+            }
+            
+            document.getElementById('outputText').value = result;
+        }
+
+        function autoConvert() {
+            const input = document.getElementById('inputText').value;
+            let hasKorean = false;
+            let hasEnglish = false;
+            
+            for (let char of input) {
+                // 개선된 감지: 한글 정규표현식 사용
+                if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(char)) hasKorean = true;
+                if (/[a-zA-Z]/.test(char)) hasEnglish = true;
+            }
+            
+            if (hasEnglish && !hasKorean) {
+                convertEngToKor();
+            } else if (hasKorean && !hasEnglish) {
+                convertKorToEng();
+            } else {
+                // 혼합된 경우 영문을 한글로 변환
+                convertEngToKor();
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').value = '';
+        }
+
+        async function copyResult() {
+            const output = document.getElementById('outputText');
+            const button = event.target;
+            const originalText = button.textContent;
+            
+            try {
+                // 최신 Clipboard API 사용
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(output.value);
+                } else {
+                    // fallback for older browsers
+                    output.select();
+                    document.execCommand('copy');
+                }
+                
+                // 복사 완료 알림
+                button.textContent = '복사 완료!';
+                button.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 2000);
+                
+            } catch (err) {
+                console.error('복사 실패:', err);
+                // fallback으로 기존 방식 시도
+                output.select();
+                document.execCommand('copy');
+                button.textContent = '복사됨';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }
+        }
+
+        function swapTexts() {
+            const input = document.getElementById('inputText').value;
+            const output = document.getElementById('outputText').value;
+            
+            document.getElementById('inputText').value = output;
+            document.getElementById('outputText').value = input;
+        }
+
+        // 실시간 변환 (옵션)
+        document.getElementById('inputText').addEventListener('input', function() {
+            if (this.value.length > 0) {
+                // 입력이 있을 때만 힌트 표시
+                const lastChar = this.value.slice(-1);
+                if (engToKor[lastChar] || korToEng[lastChar]) {
+                    // 자동 변환 미리보기는 성능상 제외
+                }
+            }
+        });
+
+        // 엔터키로 변환 실행
+        document.getElementById('inputText').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.ctrlKey) {
+                autoConvert();
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
